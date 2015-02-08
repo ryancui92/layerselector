@@ -3,9 +3,13 @@
 	cursor: pointer;
 }
 .focus {
-	color: white;
 	text-decoration: underline;
 	background-color: blue;
+    color: white;
+}
+.selected {
+	background-color: red;
+    color: white;
 }
 .line {
 	margin: 0 auto;
@@ -17,7 +21,6 @@
 	height:100%;
 	text-align: left;
 	margin-top: 5px;
-	overflow: hidden;
 }
 .line>div>label {
 	display: inline-block;

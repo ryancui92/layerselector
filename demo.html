@@ -18,8 +18,10 @@
 </head>
 <body>
 	<div class="easyui-dialog" data-options="modal:false">
-		<input class="easyui-datebox">
-		<input id="text" type="text">
+		<form id="form">
+			<input name="date"class="easyui-datebox">
+			<input name="color" id="text" type="text">
+		</form>
 	</div>
 	<script type="text/javascript" src="layerselector.js"></script>
 	<script type="text/javascript">
@@ -63,11 +65,12 @@
 				otherItem: function(selected) {return true}
 			}],
 			title: '选择颜色',
-			onSelectData: function(data) {
-				console.log(data);
-				return true;
-			},
-			width: 300
+			// onSelectData: function(data) {
+			// 	console.log(data);
+			// 	return data[0].name + ' - ' + data[1].name;
+			// },
+			width: 300,
+			// multiple: true
 		};
 		
 		$("#text").layerselector(param);

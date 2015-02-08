@@ -1,40 +1,35 @@
 /** 
- * 层级选择器-插件 1.0
+ * 层级选择器-插件
  */
 
 (function($) {
 
 	var LayerSelector = function(config, element) {
-		this.init(config, element);
+		var that = this;
+		that.$element = element;
+		that.config = $.extend({}, $.fn.layerselector.defaults, config);
+		for (var i=0; i<that.config.layers.length; i++) {
+			that.config.layers[i] = $.extend({}, $.fn.layerselector.defaultLayer, that.config.layers[i]);
+		}
+
+		init.call(that);
 	};
+
+	function init() {
+		var that = this;
+		that.initMain();			// 缓存数据
+		that.bindEvent();			// 绑定事件
+		// 显示第一层数据
+		that.layerData[0] = that.config.layers[0].dataProvider();
+		that._addTab(0);
+		// 隐藏dialog
+		that._hide();
+	}
 
 	LayerSelector.prototype = {
 		constrcutor: LayerSelector,
-		defaults: {
-			width: 320,
-			height: 200,
-			title: 'Search Sites',
-			column: 4,
-			layers: [],
-			onSelectData: function(data) {}
-		},
-		defaultLayer: {
-			dataProvider: function(selected) {},
-			idField: 'id',
-			labelField: 'label',
-			prompt: 'Select',
-			otherItem: function(selected) {return false;},
-			multiple: false
-		},
-		init: function(config, element) {
+		initMain: function() {
 			var that = this;
-			that.cacheData(config, element);		// 缓存数据
-			that.initMain();			// 初始化
-		},
-		cacheData: function(config, element) {
-			var that = this;
-			that.$element = element;
-			// 初始化
 			that.$element.textbox({
 				editable: false,
 				icons: [{
@@ -44,30 +39,17 @@
 	                }
 	            }]
 			});
-
-			that.config = $.extend({}, that.defaults, config);
-			for (var i=0; i<that.config.layers.length; i++) {
-				that.config.layers[i] = $.extend({}, that.defaultLayer, that.config.layers[i]);
-			}
-			console.log(that.config);
 			
-			$('body').append('<div id="layerSelector"><div id="tabs"></div></div>');
+			$('body').append('<div id="layerSelector" style="width:' + (that.config.width+10) + 
+						'px;height:' + (that.config.height+10) + 'px;position:relative;z-index:1000111;border: 1px solid gray;"><div id="tabs"></div></div>');
+
 			that.$dialog = $("#layerSelector");
 			that.$tabs = $("#tabs");
-			that.columnWidth = Math.floor(that.config.width/that.config.column) - 5;
-			that.display = false;
-			that.ignoreBlur = false;
-
-			that.layerData = [];		// 每一层的数据
-			that.selected = [];			// 每一层的选择
-		},
-		initMain: function() {
-			var that = this;
-
 			that.$tabs.tabs({
+				border: false,
 				width: that.config.width+10,
 				height: that.config.height+10,
-				onAdd: function(title, layer) {
+				onUpdate: function(title, layer) {
 					if (that.config.layers[layer].otherItem(layer==0 ? null : that.selected[layer-1])) {
 						that.$otherText = $("[name='othertext"+layer+"']");
 						that.$otherText.textbox({
@@ -83,20 +65,29 @@
 					}
 				}
 			});
-			
+
+			// 每个 item 需要占的width
+			that.columnWidth = Math.floor(that.config.width/that.config.column) - 5;
+			// 每一层的数据
+			that.layerData = [];		
+			// 每一层的选择
+			that.selected = [];		
+		},
+		bindEvent: function() {
+			var that = this;
+
 			// item鼠标悬停效果
-			that.$dialog.delegate('.link', 'mouseover', function() {
+			that.$dialog.on('mouseover', '.link', function() {
 				$(this).addClass('focus');
 			});
-			that.$dialog.delegate('.link', 'mouseout', function() {
+			that.$dialog.on('mouseout', '.link', function() {
 				$(this).removeClass('focus');
 			});
 			
 			// item选择事件
-			that.$dialog.delegate('.link', 'click', function() {
-				that.$element.focus();
-
-				var id = $(this).data('id'),						// 选中item的id
+			that.$dialog.on('click', '.link', function() {
+				var $this = $(this),
+					id = $(this).data('id'),						// 选中item的id
 					tab = that.$tabs.tabs('getSelected'),			
 					layer = that.$tabs.tabs('getTabIndex', tab),	// 当前所在层
 					data = null;
@@ -109,69 +100,80 @@
 				for (var i in that.layerData[layer]) {
 					if ( that.layerData[layer][i][that.config.layers[layer].idField] == id ) {
 						data = that.layerData[layer][i];
-						that.selected[layer] = data;				// 设置当前已经选择的数据项 
 						break;
 					}
 				}
+				
+				// TODO 多选而且选择的item是最后一层
+				if (that.config.multiple && layer==that.config.layers.length-1) {
+					// 在原来selected中找，找到就移走，清除样式
+					var origin = false;
+					
+					for (var i=layer; i<that.selected.length; i++) {
+						if (that.selected[i][that.config.layers[layer].idField] == id) {
+							origin = true;
+							that.selected = [].concat(that.selected.slice(0, i), that.selected.slice(i+1));
+							$this.removeClass('selected');
+							break;
+						}
+					}
+
+					// 找不到就加进，加入样式
+					if (!origin) {
+						that.selected.push(data);
+						$this.addClass('selected');
+					}
+				} else {
+					that.selected[layer] = data;
+				}
+				console.log(that.selected);
 				
 				that._onSelectLayer(layer, data);
 			});
 			
 			// tab页面鼠标悬停显示该tab
-			that.$dialog.delegate('ul.tabs>li', 'mouseover', function() {
+			that.$dialog.on('mouseover', 'ul.tabs>li',  function() {
 				that.$tabs.tabs('select', $(this).index());
 			});
 			
-			that.$element.textbox('textbox').bind('click', function() {
+			// 单击textbox显示选择器
+			that.$element.textbox('textbox').on('click', function() {
 				that._show();
 			});
 
-			$('html').bind('mousedown', function(event) {
-				if ($(event.target).closest('#layerSelector').length == 0) {
+			// 单击除了选择器面板外的地方隐藏面板
+			$('html').on('mousedown', function(event) {
+				// TODO 点击textbox和icon本身时出现闪烁，这里的mousedown事件没有处理
+				// 到点击textbox和icon的事件
+				if ($(event.target).closest('#layerSelector').length==0) {
 					that._hide();
 				}
 			});
-
-			// 显示第一层数据
-			that.layerData[0] = that.config.layers[0].dataProvider();
-			that._addTab(0);
-
-			// 隐藏dialog
-			that._hide();
 		},
 		_show: function() {
-			var that = this;
-			// that.$dialog.dialog('open');
-			var pos = that.$element.textbox('textbox').offset();
+			var that = this, pos = that.$element.textbox('textbox').offset();
 			that.$dialog.css({
-				'width': that.config.width+10,
-				'height': that.config.height+10,
-				'position': 'relative',
 				'top': pos.top - 7 + that.$element.textbox('options').height,
-				'left': pos.left - 9,
-				'z-index': 10011111
+				'left': pos.left - 9
 			});
-			that.display = true;
-			that.$dialog.show();
+			that.$dialog.css({'display': 'block'});
 		},
 		_hide: function() {
 			var that = this;
-			that.display = false;
-			that.$dialog.hide();
+			that.$dialog.css({'display': 'none'});
 		},
 		_addTab: function(layer) {
-			// 添加一个tab页面并跳到该页面
-			var that = this, contentObj = that._generateContent(layer);
+			// 添加第layer层的tab页面并跳到该页面
+			var that = this;
 			that.$tabs.tabs('add', {
 				title: that.config.layers[layer].prompt,
-				selected: true,
-				content: contentObj.content
+				content: that._generateContent(layer),
+				selected: true
 			});
-			
 		},
 		_generateContent: function(layer) {
 			// 生成某一层的UI
-			var that = this, obj = that.layerData[layer], lineArr = [], line = '', ret = {};
+			var that = this, obj = that.layerData[layer], lineArr = [], line = '', ret = '';
 			for (var i=0; i<obj.length; i++) {
 				line += '<div style="width:' + that.columnWidth + 'px;"><label data-id="' + 
 						obj[i][that.config.layers[layer].idField] + '" class="link">' + 
@@ -184,7 +186,7 @@
 			if (line != '') {
 				lineArr.push(line);
 			} 
-			ret.content = '<div style="width:'+(that.config.width)+'px;" class="line">' + 
+			ret = '<div style="width:'+(that.config.width)+'px;" class="line">' + 
 					lineArr.join('</div><div style="width:'+(that.config.width)+'px;" class="line">') + '</div>';
 			
 			// 添加其他选项
@@ -193,63 +195,103 @@
 						'px;"><label data-id="other" class="link">其他</label></div>' +
 						'<div style="width:'+(that.columnWidth*(that.config.column-1))+'px;"><input name="othertext'+layer+'" style="width:100%;"></div>' + 
 						'</div>';
-				ret.content += str;
+				ret += str;
 			}
-			ret.rows = lineArr.length;
 			return ret;
 		},
 		_onSelectLayer: function(layer, data) {
 			var that = this;
 			
-			// 已经选择了最后一层
-			if (layer == that.config.layers.length-1) {
-				if (that.config.onSelectData(that.selected)) {
-					that._hide();
-				}
-				return;
-			}
-			
 			// 将当前tab的标题改为选中的item
 			var thisTab = that.$tabs.tabs('getTab', layer);
+			var newTitle = '';
+			if (layer==that.config.layers.length-1 && that.config.multiple) {
+				// TODO 最后一层多选
+				var newTitleArr = [];
+				for (var i=layer; i<that.selected.length; i++) {
+					newTitleArr.push(that.selected[i][that.config.layers[layer].labelField]);
+				}
+				newTitle = newTitleArr.join(',');
+			} else {
+				newTitle = data[that.config.layers[layer].labelField];
+			}
 			that.$tabs.tabs('update', {
 				tab: thisTab,
 				options: {
-					title: data[that.config.layers[layer].labelField]
+					title: newTitle=='' ? that.config.layers[layer].prompt : newTitle
 				}
 			});
-			
-			// 关闭选中的layer之后的tabs
-			var allTabs = that.$tabs.tabs('tabs');
-			for (var i=allTabs.length-1; i>layer; i--) {
-				that.$tabs.tabs('close', i);
-			}
-			
-			// 加载下一层的数据
-			that.layerData[layer+1] = that.config.layers[layer+1].dataProvider(data);
-			
-			// 增加一个tab
-			that._addTab(layer+1);
-		},
-		toggleDisplay: function() {
-			var that = this;
-			if (that.display) {
-				that._hide();
+
+			// 已经选择了最后一层
+			if (layer == that.config.layers.length-1) {
+				var result = that.config.onSelectData(that.selected);
+				that.$element.textbox('setValue', result);
+				if (!that.config.multiple) {
+					that._hide();
+				}
+				return;
 			} else {
-				that._show();
+				// 关闭选中的layer之后的tabs
+				var allTabs = that.$tabs.tabs('tabs');
+				for (var i=allTabs.length-1; i>layer; i--) {
+					that.$tabs.tabs('close', i);
+				}
+				
+				// 加载下一层的数据
+				that.layerData[layer+1] = that.config.layers[layer+1].dataProvider(data);
+				
+				// 增加一个tab
+				that._addTab(layer+1);
 			}
+		},
+		test: function() {
+			//console.log($(this));
 		}
 	}
 
 	$.fn.layerselector = function(option, param) {
-		if (typeof option == 'string') {
-			// TODO 方法调用
-		} else if (typeof option == 'object') {
-			return this.each(function() {
-				var $this = $(this);
-				var layerSelector = new LayerSelector(option, $this);
-			});
-		}
+		return this.each(function() {
+			var $this = $(this);
+			var layerselector = $this.data('layerselector');
+			if (typeof option == 'string') {
+				layerselector[option].apply($this, Array.prototype.slice.call(arguments, 1));
+			} else if (typeof option == 'object') {
+				$this.data('layerselector', (layerselector = new LayerSelector(option, $this)) );
+			}
+		});
 	}
+
+	// 层级选择器默认参数
+	$.fn.layerselector.defaults = {
+		width: 300,
+		height: 200,
+		column: 4,
+		title: 'Search Layer',
+		layers: [],
+		multiple: false,
+		onSelectData: function(data) {
+			var $this = this, o = data.pop();
+			if ($this.multiple) {
+				var arr = [];
+				for (var i=$this.layers.length-1; i<$this.layers.length; i++) {
+					arr.push(data[ $this.layers[$this.layers.length-1].labelField ]);
+				}
+				return arr.join(',');
+			} else {
+				return o[ $this.layers[$this.layers.length-1].labelField ];
+			}
+			
+		}
+	};
+
+	// 层级选择器某一层的默认参数
+	$.fn.layerselector.defaultLayer = {
+		dataProvider: function(selected) {},
+		idField: 'id',
+		labelField: 'label',
+		prompt: 'Select',
+		otherItem: function(selected) {return false;}
+	};
 
 })(jQuery);
 
