@@ -17,11 +17,13 @@
 
 </head>
 <body>
-
-	<input id="text" class="easyui-textbox">
+	<div class="easyui-dialog" data-options="modal:false">
+		<input class="easyui-datebox">
+		<input id="text" type="text">
+	</div>
 	<script type="text/javascript" src="layerselector.js"></script>
 	<script type="text/javascript">
-		var ls = new LayerSelector({
+		var param = {
 			layers: [{
 				dataProvider: function(selected) {
 					return [{
@@ -58,21 +60,18 @@
 				},
 				idField: 'id',
 				labelField: 'name',
+				otherItem: function(selected) {return true}
 			}],
 			title: '选择颜色',
 			onSelectData: function(data) {
 				console.log(data);
 				return true;
-			}
-		});
+			},
+			width: 300
+		};
 		
-		$("#text").textbox({
-			 buttonIcon: 'icon-search',
-			 editable: false,
-			 onClickButton: function() {
-				 ls.open();
-			 }
-		});
+		$("#text").layerselector(param);
+		
 	</script>
 </body>
 </html>
