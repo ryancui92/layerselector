@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>Demo</title>
+
+<script type="text/javascript" src="jquery-1.11.1.js"></script>
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="easyui/easyui-lang-zh_CN.js"></script>
+
+<link rel="stylesheet" type="text/css" href="easyui/themes/blue/easyui.css" />
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css" />
+<link rel="stylesheet" type="text/css" href="easyui/themes/color.css" />
+
+<link rel="stylesheet" type="text/css" href="layerselector.css" />
+
+</head>
+<body>
+
+	<input id="text" class="easyui-textbox">
+	<script type="text/javascript" src="layerselector.js"></script>
+	<script type="text/javascript">
+		var ls = new LayerSelector({
+			layers: [{
+				dataProvider: function(selected) {
+					return [{
+						id: 1, name: '红色'
+					}, {
+						id: 2, name: '黄色'
+					}, {
+						id: 3, name: '蓝色'
+					}];
+				},
+				idField: 'id',
+				labelField: 'name',
+			},{
+				dataProvider: function(selected) {
+					if (selected.id == 1) {
+						return [{
+							id: 1, name: '浅红'
+						}, {
+							id: 2, name: '深红'
+						}];
+					} else if (selected.id == 2) {
+						return [{
+							id: 1, name: '浅黄'
+						}, {
+							id: 2, name: '深黄'
+						}];
+					} else if (selected.id == 3) {
+						return [{
+							id: 1, name: '浅蓝'
+						}, {
+							id: 2, name: '深蓝'
+						}];
+					}
+				},
+				idField: 'id',
+				labelField: 'name',
+			}],
+			title: '选择颜色',
+			onSelectData: function(data) {
+				console.log(data);
+				return true;
+			}
+		});
+		
+		$("#text").textbox({
+			 buttonIcon: 'icon-search',
+			 editable: false,
+			 onClickButton: function() {
+				 ls.open();
+			 }
+		});
+	</script>
+</body>
+</html>

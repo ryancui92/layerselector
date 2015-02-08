@@ -1,0 +1,28 @@
+.link {
+	color: black;
+	cursor: pointer;
+}
+.focus {
+	color: white;
+	text-decoration: underline;
+	background-color: blue;
+}
+.line {
+	margin: 0 auto;
+}
+.line>div {
+	display: inline-block;
+	*display: inline;
+	*zoom: 1;
+	height:100%;
+	text-align: left;
+	margin-top: 5px;
+	overflow: hidden;
+}
+.line>div>label {
+	display: inline-block;
+	*display: inline;
+	text-align: left;
+	vertical-align: center;
+	padding: 3px;
+}
