@@ -9,7 +9,7 @@
 <script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
 <script type="text/javascript" src="easyui/easyui-lang-zh_CN.js"></script>
 
-<link rel="stylesheet" type="text/css" href="easyui/themes/blue/easyui.css" />
+<link rel="stylesheet" type="text/css" href="easyui/themes/green/easyui.css" />
 <link rel="stylesheet" type="text/css" href="easyui/themes/icon.css" />
 <link rel="stylesheet" type="text/css" href="easyui/themes/color.css" />
 
@@ -27,6 +27,7 @@
 	<script type="text/javascript">
 		var param = {
 			layers: [{
+				field: 'color1',
 				dataProvider: function(selected) {
 					return [{
 						id: 1, name: '红色'
@@ -39,6 +40,7 @@
 				idField: 'id',
 				labelField: 'name',
 			},{
+				field: 'color2',
 				dataProvider: function(selected) {
 					if (selected.id == 1) {
 						return [{
@@ -70,7 +72,7 @@
 			// 	return data[0].name + ' - ' + data[1].name;
 			// },
 			width: 300,
-			// multiple: true
+			multiple: true
 		};
 		
 		$("#text").layerselector(param);
