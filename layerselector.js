@@ -64,6 +64,23 @@
 				width: that.config.width+10,
 				height: that.config.height+10,
 				onUpdate: function(title, layer) {
+					if (that.config.multiple && layer==that.layers.length-1) {
+						var thisTab = that.$tabs.tabs('getTab', layer);
+						var $allLink = thisTab.panel('panel').find('.link');
+						$allLink.each(function(i, v) {
+							$(this).removeClass('calendar-selected');
+							var id = $(this).data('id'), has = false;
+							if (that.selected[that.layers[layer].field]) {
+								$.each(that.selected[that.layers[layer].field], function(i, v) {
+									if (v[that.layers[layer].idField] == id) {
+										has = true;
+									}
+								});
+								has ? $(this).addClass('calendar-selected') : $(this).removeClass('calendar-selected');
+							}
+						});
+					}
+
 					if (that.layers[layer].otherItem(layer==0 ? null : that.selected[that.layers[layer-1].field])) {
 						that.$otherText = $("[name='othertext"+layer+"']");
 						that.$otherText.textbox({
@@ -147,30 +164,17 @@
 
 					that._onSelectLayer(layer, data);
 
+					if (origin) {
+						$this.removeClass('kkkk');
+					} else {
+						$this.addClass('kkkk');
+					}
 				} else {
 					that.selected[that.layers[layer].field] = data;
 					that._onSelectLayer(layer, data);
 				}
 				// console.log(that.selected);
 			});
-
-			// that.$dialog.on('mouseup', '.link', function() {
-			// 	var $this = $(this),
-			// 		id = $(this).data('id'),						// 选中item的id
-			// 		tab = that.$tabs.tabs('getSelected'),			
-			// 		layer = that.$tabs.tabs('getTabIndex', tab),	// 当前所在层
-			// 		origin = false;
-			// 	if (that.config.multiple && layer==that.layers.length-1) {
-			// 		if (that.selected[that.layers[layer].field]) {
-			// 			$.each(that.selected[that.layers[layer].field], function(i, v) {
-			// 				if (v[that.layers[layer].idField] == id) {
-			// 					origin = true;
-			// 				}
-			// 			});
-			// 		}
-			// 		origin ? $this.removeClass('calendar-selected') : $this.addClass('calendar-selected');
-			// 	}
-			// });
 		},
 		_show: function() {
 			var that = this, pos = that.$element.textbox('textbox').offset();
