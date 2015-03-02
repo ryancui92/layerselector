@@ -15,6 +15,8 @@
 
 <link rel="stylesheet" type="text/css" href="layerselector.css" />
 
+</body>
+</html>
 </head>
 <body>
 	<div class="easyui-dialog" data-options="modal:false">
@@ -26,11 +28,12 @@
 	<script type="text/javascript" src="layerselector.js"></script>
 	<script type="text/javascript">
 		var param = {
+			column: 5,
 			layers: [{
 				field: 'color1',
 				dataProvider: function(selected) {
 					return [{
-						id: 1, name: '红色'
+						id: 1, name: '丧心病狂的红色'
 					}, {
 						id: 2, name: '黄色'
 					}, {
@@ -50,7 +53,7 @@
 						}];
 					} else if (selected.id == 2) {
 						return [{
-							id: 1, name: '浅黄'
+							id: 1, name: '浅黄是令人神往的'
 						}, {
 							id: 2, name: '深黄'
 						}];
@@ -64,7 +67,7 @@
 				},
 				idField: 'id',
 				labelField: 'name',
-				otherItem: function(selected) {return true}
+				//otherItem: function(selected) {return true}
 			}],
 			title: '选择颜色',
 			// onSelectData: function(data) {
