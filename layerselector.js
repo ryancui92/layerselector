@@ -45,8 +45,8 @@
 				that._show();
 			});
 
-			$('body').append('<div id="layerSelector" class="panel-body" style="width:' + (that.config.width+10) + 
-						'px;height:' + (that.config.height+10) + 'px;position:relative;z-index:1000111;"><div id="tabs"></div></div>');
+			$('body').append('<div id="layerSelector" class="panel-body" style="width:' + (that.config.panelWidth+10) + 
+						'px;height:' + (that.config.panelHeight+10) + 'px;position:relative;z-index:1000111;"><div id="tabs"></div></div>');
 
 			that.$dialog = $("#layerSelector");
 			that.$dialog.on('mouseover', 'ul.tabs>li',  function() {
@@ -67,9 +67,10 @@
 			that.$tabs = $("#tabs");
 			that.$tabs.tabs({
 				border: false,
-				width: that.config.width+10,
-				height: that.config.height+10,
+				width: that.config.panelWidth + 10,
+				height: that.config.panelHeight + 10,
 				onUpdate: function(title, layer) {
+					// Change CSS when multiple mode
 					if (that.config.multiple && layer==that.layerCount-1) {
 						var thisTab = that.$tabs.tabs('getTab', layer);
 						var $allLink = thisTab.panel('panel').find('.link');
@@ -87,21 +88,15 @@
 						});
 					}
 
-					if (that.layers[layer].otherItem(layer==0 ? null : that.selected[that.layers[layer-1].field])) {
+					// Format other textbox when there exists
+					if (that.layers[layer].otherItem(!layer ? null : that.selected[that.layers[layer-1].field])) {
 						that.$otherText = $("[name='othertext"+layer+"']");
 						that.$otherText.textbox({
-							buttonText: 'OK',
+							buttonText: that.layers[layer].otherOkText,
 							onClickButton: function() {
 								var val = that.$otherText.textbox('getText'), data = {};
 								data[that.layers[layer].labelField] = val;
-								if (layer==that.layers.length-1 && that.config.multiple) {
-									if (!that.selected[that.layers[layer].field]) {
-										that.selected[that.layers[layer].field] = [];
-									}
-									that.selected[that.layers[layer].field].push(data);
-								} else {
-									that.selected[that.layers[layer].field] = data;
-								}
+								data[that.layers[layer].idField] = null;
 								that._onSelectLayer(layer, data);
 							}
 						});
@@ -119,9 +114,10 @@
 			});
 
 			// The minimal width of one item
-			that.columnWidth = Math.floor(that.config.width/that.config.column) - 5;
+			that.columnWidth = Math.floor(that.config.panelWidth/that.config.column) - 5;
 			that.layerData = {};		// Data in each layer
 			that.selected = {};			// Selected Data in each layer
+			that._resetSelectedData();
 		},
 		bindEvent: function() {
 			var that = this;
@@ -133,7 +129,7 @@
 					layer = that.$tabs.tabs('getTabIndex', tab),
 					data = null;
 				
-				if (!id || id=='other') {
+				if (!id) {
 					return;
 				}
 				
@@ -145,38 +141,8 @@
 					}
 				}
 				
-				if (that.config.multiple && layer==that.layerCount-1) {
-					var lastSelected = that.selected[that.layers[layer].field], origin = false; 
-					if (!lastSelected) {
-						that.selected[that.layers[layer].field] = [];
-						lastSelected = [];
-					}
+				that._onSelectLayer(layer, data);
 
-					// If already select before, then remove it
-					for (var i=0; i<lastSelected.length; i++) {
-						if (lastSelected[i][that.config.layers[layer].idField] == id) {
-							origin = true;
-							that.selected[that.layers[layer].field] = [].concat(lastSelected.slice(0, i), lastSelected.slice(i+1));
-							break;
-						}
-					}
-					// If not select, add it in selected data
-					if (!origin) {
-						that.selected[that.layers[layer].field].push(data);
-					}
-
-					that._onSelectLayer(layer, data);
-
-					// Change CSS
-					if (origin) {
-						$this.removeClass('kkkk');
-					} else {
-						$this.addClass('kkkk');
-					}
-				} else {
-					that.selected[that.layers[layer].field] = data;
-					that._onSelectLayer(layer, data);
-				}
 			});
 		},
 		_show: function() {
@@ -205,8 +171,8 @@
 		},
 		/**
 		 * Generate the HTML code in layer
-		 * @param {number} layer The layer number begin with 0
-		 * @return {string} HTML code
+		 * @param {Number} layer The layer number begin with 0
+		 * @return {String} HTML code
 		 */
 		_generateContent: function(layer) {
 			var that = this, obj = that.layerData[that.layers[layer].field], lineArr = [], line = '', ret = '';
@@ -239,10 +205,9 @@
 				lineArr.join('</div><div style="width:'+(that.config.width)+'px;" class="line">') + '</div>';
 			
 			// Other item exists?
-			// TODO Change Chinese into Variable defined
 			if (that.layers[layer].otherItem(layer==0 ? null : that.selected[that.layers[layer-1].field])) {
 				var str = '<div style="width:'+(that.config.width)+'px;" class="line"><div style="width:' + 
-					that.columnWidth +'px;"><label data-id="other" class="link">其他</label></div>' +
+					that.columnWidth +'px;"><label class="link">'+ that.layers[layer].otherText +'</label></div>' +
 					'<div style="width:'+ (that.columnWidth*(that.config.column-1)) +
 					'px;"><input name="othertext'+ layer +'" style="width:100%;"></div>' + 
 					'</div>';
@@ -252,18 +217,57 @@
 			// Add a OK button when in multiple mode
 			if (that.config.multiple && layer==that.layerCount-1) {
 				var str = '<div style="width:'+(that.config.width)+'px;text-align:center;">' +
-					'<a href="#" class="easyui-linkbutton ok-button" style="width:'+ that.columnWidth + 'px;">确定</a></div>' + 
-					'</div>';
+					'<a href="#" class="easyui-linkbutton ok-button" data-options="iconCls:\'icon-ok\'" ' +
+					'style="width:'+ that.columnWidth + 'px;">'+ that.config.okText +'</a></div></div>';
 				ret += str;
 			}
 			return ret;
 		},
+
+		/**
+		 * Reset the selected data to null or [] after sLayer
+		 * @param {Number} sLayer the start of layer
+		 */
+		_resetSelectedData: function(sLayer) {
+			var that = this;
+			sLayer = sLayer ? sLayer : 0;
+			for (var i=sLayer; i<that.layers.length; i++) {
+				if (that.config.multiple && i == that.layerCount - 1) {
+					that.selected[that.layers[i].field] = [];
+				} else {
+					that.selected[that.layers[i].field] = null;
+				}
+			}
+		},
+		/**
+		 * Callback when select data in layer
+		 * @param layer
+		 * @param data
+		 */
 		_onSelectLayer: function(layer, data) {
-			var that = this, newOption = false;
+			var that = this, 
+				newOption = false,		// If this selection is a new one
+				isMultipleAndLastLayer = that.config.multiple && layer==that.layerCount-1;
 			
-			// Clear selected data after layer+1
-			for (var i=layer+1; i<that.layerCount; i++) {
-				that.selected[that.layers[i].field] = null;
+			// Set the current selection into selected data
+			if (isMultipleAndLastLayer) {
+				var lastSelected = that.selected[that.layers[layer].field], origin = false; 
+
+				// If already select before, then remove it
+				for (var i=0; i<lastSelected.length; i++) {
+					if (lastSelected[i][that.layers[layer].idField] == data.id) {
+						origin = true;
+						that.selected[that.layers[layer].field] = 
+							[].concat(lastSelected.slice(0, i), lastSelected.slice(i+1));
+						break;
+					}
+				}
+				// If not select, then add it in selected data
+				if (!origin) {
+					that.selected[that.layers[layer].field].push(data);
+				}
+			} else {
+				that.selected[that.layers[layer].field] = data;
 			}
 
 			// Change tab title to current selected
@@ -271,7 +275,7 @@
 			if (thisTab.panel('options').title != data[that.layers[layer].labelField]) {
 				newOption = true;
 			}
-			if (that.config.multiple && layer==that.layerCount-1) {
+			if (isMultipleAndLastLayer) {
 				var newTitleArr = [];
 				$.each(that.selected[that.layers[layer].field], function(i, v) {
 					newTitleArr.push(v[that.layers[layer].labelField]);
@@ -283,21 +287,21 @@
 			that.$tabs.tabs('update', {
 				tab: thisTab,
 				options: {
-					title: newTitle=='' ? that.layers[layer].prompt : newTitle
+					title: !newTitle ? that.layers[layer].prompt : newTitle
 				}
 			});
 
 			if (layer == that.layerCount-1) {
 				var result = that.config.onSelectData(that.selected);
 				that.$element.textbox('setValue', result);
-				if (!that.config.multiple) {
-					that._hide();
-				}
-				return;
+				that.config.multiple ? null : that._hide();
 			} else {
 				// Select a different item 
 				if (newOption) {
 					that.$element.textbox('clear');
+
+					// Clear data
+					that._resetSelectedData(layer+1);
 
 					// Close tabs after layer+1
 					var allTabs = that.$tabs.tabs('tabs');
@@ -321,6 +325,7 @@
 		return this.each(function() {
 			var $this = $(this);
 			var layerselector = $this.data('layerselector');
+			// TODO Add some universal method to layerselector, like load method
 			if (typeof option == 'string') {
 				layerselector.$element.textbox(option, param);
 			} else if (typeof option == 'object') {
@@ -330,12 +335,13 @@
 	}
 
 	$.fn.layerselector.defaults = {
-		width: 300,					// The width of the panel
-		height: 200,				// The height of the panel
+		panelWidth: 300,			// The width of the panel
+		panelHeight: 200,			// The height of the panel
 		column: 4,					// The columns of items in panel
 		layers: [],					// Layers
 		multiple: false,			// Indicates multiple choices in the last layer
 		chracterPixels: 15,			// Pixels for a character
+		okText: 'OK',				// The text display in Ok button
 		onSelectData: function(data) {		// Call when select in last layer
 			var $this = this, o = data[$this.layers[$this.layers.length-1].field];
 			if ($this.multiple) {
@@ -359,7 +365,9 @@
 		prompt: 'Select',					// Prompt message in the tab title initially
 		otherItem: function(selected) {		// Define whether other item should be display base on previous layer's selected
 			return false;
-		}
+		},
+		otherText: 'Other',					// Other item display text
+		otherOkText: 'Ok'					// Other textbox button
 	};
 
 })(jQuery);

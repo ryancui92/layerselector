@@ -15,71 +15,14 @@
 
 <link rel="stylesheet" type="text/css" href="layerselector.css" />
 
-</body>
-</html>
 </head>
 <body>
-	<div class="easyui-dialog" data-options="modal:false">
+	<div class="easyui-dialog" data-options="modal:false,width:700,height:500">
 		<form id="form">
-			<input name="date"class="easyui-datebox">
-			<input name="color" id="text" type="text">
+			<input name="color" id="color">
 		</form>
 	</div>
-	<script type="text/javascript" src="layerselector.js"></script>
-	<script type="text/javascript">
-		var param = {
-			column: 5,
-			layers: [{
-				field: 'color1',
-				dataProvider: function(selected) {
-					return [{
-						id: 1, name: '丧心病狂的红色'
-					}, {
-						id: 2, name: '黄色'
-					}, {
-						id: 3, name: '蓝色'
-					}];
-				},
-				idField: 'id',
-				labelField: 'name',
-			},{
-				field: 'color2',
-				dataProvider: function(selected) {
-					if (selected.id == 1) {
-						return [{
-							id: 1, name: '浅红'
-						}, {
-							id: 2, name: '深红'
-						}];
-					} else if (selected.id == 2) {
-						return [{
-							id: 1, name: '浅黄是令人神往的'
-						}, {
-							id: 2, name: '深黄'
-						}];
-					} else if (selected.id == 3) {
-						return [{
-							id: 1, name: '浅蓝'
-						}, {
-							id: 2, name: '深蓝'
-						}];
-					}
-				},
-				idField: 'id',
-				labelField: 'name',
-				//otherItem: function(selected) {return true}
-			}],
-			title: '选择颜色',
-			// onSelectData: function(data) {
-			// 	// console.log(data);
-			// 	return data['color1'].name + ' - ' + data['color2'].name;
-			// },
-			width: 300,
-			multiple: true
-		};
-		
-		$("#text").layerselector(param);
-		
-	</script>
+	<script src="layerselector.js"></script>
+	<script src="demo.js"></script>
 </body>
 </html>
