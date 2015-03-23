@@ -33,6 +33,8 @@
 		initMain: function() {
 			var that = this;
 			that.$element.textbox({
+				// TODO More textbox attribute
+				required: that.config.required || false,
 				editable: false,
 				icons: [{
 	                iconCls:'icon-search',
@@ -41,12 +43,11 @@
 	                }
 	            }]
 			});
-			that.$element.textbox('textbox').on('click', function() {
-				that._show();
-			});
+			that.$element.textbox('textbox').on('click', $.proxy(this._show, this));
 
 			$('body').append('<div id="layerSelector" class="panel-body" style="width:' + (that.config.panelWidth+10) + 
-						'px;height:' + (that.config.panelHeight+10) + 'px;position:relative;z-index:1000111;"><div id="tabs"></div></div>');
+				'px;height:' + (that.config.panelHeight+10) + 'px;position:relative;z-index:1000111;">' + 
+				'<div id="tabs"></div></div>');
 
 			that.$dialog = $("#layerSelector");
 			that.$dialog.on('mouseover', 'ul.tabs>li',  function() {
@@ -130,6 +131,13 @@
 					data = null;
 				
 				if (!id) {
+					if ($this.attr('class').indexOf('calendar-selected') > 0) {
+						data = {};
+						data[that.layers[layer].idField] = null;
+						that._onSelectLayer(layer, data);
+					} else {
+						that.$element.focus();
+					}
 					return;
 				}
 				
@@ -175,68 +183,87 @@
 		 * @return {String} HTML code
 		 */
 		_generateContent: function(layer) {
-			var that = this, obj = that.layerData[that.layers[layer].field], lineArr = [], line = '', ret = '';
-			for (var i=0, j=0; i<obj.length; i++) {
-				var colspan = 1;
+			var that = this, 
+				obj = that.layerData[that.layers[layer].field], 
+				lineArr = [], line = '', ret = '', linePos = 1, colspan = 1;
+			for (var i=0; i<obj.length; i++) {
+				colspan = 1;
 				while (obj[i][that.layers[layer].labelField].length * that.config.chracterPixels 
 					> that.columnWidth * colspan) {
 					colspan++;
-					j++;
+					linePos++;
+					if (colspan == that.config.column) {
+						break;
+					}
 				}
+				
 				// The rest of the line cannot afford enough space for colspan
 				// Then go to next line
-				if (colspan+j >= that.config.column) {
+				if (linePos > that.config.column) {
 					lineArr.push(line);
 					line = '';
-					j = colspan-1;
+					linePos = colspan;
 				}
 				line += '<div style="width:' + that.columnWidth*colspan + 'px;"><label data-id="' + 
 					obj[i][that.layers[layer].idField] + '" class="link">' + 
 					obj[i][that.layers[layer].labelField] + '</label></div>';
-				if (j%that.config.column == that.config.column-1) {
+				if (linePos%that.config.column == 0) {
 					lineArr.push(line);
 					line = '';
+					linePos = 1;
+				} else {
+					linePos++;
 				}
 			}
-			if (line != '') {
+			if (line) {
 				lineArr.push(line);
 			} 
-			ret = '<div style="width:'+(that.config.width)+'px;" class="line">' + 
-				lineArr.join('</div><div style="width:'+(that.config.width)+'px;" class="line">') + '</div>';
+			var items = '<div style="width:'+(that.config.panelWidth)+'px;" class="line"><span style="margin-left:10px;"></span>' + 
+				lineArr.join('</div><div style="width:'+(that.config.panelWidth)+'px;" class="line"><span style="margin-left:10px;"></span>') + '</div>';
 			
 			// Other item exists?
 			if (that.layers[layer].otherItem(layer==0 ? null : that.selected[that.layers[layer-1].field])) {
-				var str = '<div style="width:'+(that.config.width)+'px;" class="line"><div style="width:' + 
+				var str = '<div style="width:'+(that.config.panelWidth)+'px;" class="line"><span style="margin-left:10px;"></span><div style="width:' + 
 					that.columnWidth +'px;"><label class="link">'+ that.layers[layer].otherText +'</label></div>' +
 					'<div style="width:'+ (that.columnWidth*(that.config.column-1)) +
 					'px;"><input name="othertext'+ layer +'" style="width:100%;"></div>' + 
 					'</div>';
-				ret += str;
+				items += str;
 			}
 
+			
+			
 			// Add a OK button when in multiple mode
 			if (that.config.multiple && layer==that.layerCount-1) {
-				var str = '<div style="width:'+(that.config.width)+'px;text-align:center;">' +
-					'<a href="#" class="easyui-linkbutton ok-button" data-options="iconCls:\'icon-ok\'" ' +
-					'style="width:'+ that.columnWidth + 'px;">'+ that.config.okText +'</a></div></div>';
-				ret += str;
+				var okButton = '<div style="width:'+(that.config.panelWidth)+'px;text-align:center;vertical-align:middle;">' +
+					'<a href="javascript:void(0)" class="easyui-linkbutton ok-button" data-options="iconCls:\'icon-ok\'" ' +
+					'style="width:60px;">'+ that.config.okText +'</a></div></div>';
+				ret += okButton;
+				ret = '<div class="easyui-layout" data-options="fit:true"><div data-options="region:\'center\',border:false">'+items+'</div>' +
+					'<div data-options="region:\'south\',border:false" style="height:30px;">'+okButton+'</div></div>';
+			} else {
+				ret = '<div class="easyui-layout" data-options="fit:true"><div data-options="region:\'center\',border:false">'+items+'</div></div>';
 			}
 			return ret;
 		},
 
-		/**
-		 * Reset the selected data to null or [] after sLayer
-		 * @param {Number} sLayer the start of layer
-		 */
+		/** Reset the selected data to null or [] from sLayer to the end*/
 		_resetSelectedData: function(sLayer) {
-			var that = this;
 			sLayer = sLayer ? sLayer : 0;
-			for (var i=sLayer; i<that.layers.length; i++) {
-				if (that.config.multiple && i == that.layerCount - 1) {
-					that.selected[that.layers[i].field] = [];
+			for (var i=sLayer; i<this.layers.length; i++) {
+				if (this.config.multiple && i == this.layerCount - 1) {
+					this.selected[this.layers[i].field] = [];
 				} else {
-					that.selected[that.layers[i].field] = null;
+					this.selected[this.layers[i].field] = null;
 				}
+			}
+		},
+		/** Close all tabs after sLayer */
+		_resetTabs: function(sLayer) {
+			sLayer = sLayer ? sLayer : 1;
+			var allTabs = this.$tabs.tabs('tabs');
+			for (var i=allTabs.length-1; i>=sLayer; i--) {
+				this.$tabs.tabs('close', i);
 			}
 		},
 		/**
@@ -281,6 +308,10 @@
 					newTitleArr.push(v[that.layers[layer].labelField]);
 				});
 				newTitle = newTitleArr.join(',');
+				// Prevent a too long title, which collaspe the previous tab title
+				if (newTitle.length * that.config.chracterPixels > that.config.panelWidth / 2) {
+					newTitle = newTitleArr[0] + ',..,' + newTitleArr[newTitleArr.length-1];
+				}
 			} else {
 				newTitle = data[that.layers[layer].labelField];
 			}
@@ -303,11 +334,8 @@
 					// Clear data
 					that._resetSelectedData(layer+1);
 
-					// Close tabs after layer+1
-					var allTabs = that.$tabs.tabs('tabs');
-					for (var i=allTabs.length-1; i>layer; i--) {
-						that.$tabs.tabs('close', i);
-					}
+					// Close tabs after layer
+					that._resetTabs(layer+1);
 					
 					// Load next layer data
 					that.layerData[that.layers[layer+1].field] = that.layers[layer+1].dataProvider(data);
@@ -318,20 +346,47 @@
 					that.$tabs.tabs('select', layer+1);
 				}
 			}
+		},
+		/** Load Data */
+		load: function(param) {
+			this._resetSelectedData();
+			for (var i=0; i<this.layers.length; i++) {
+				var data = null, flag = param.flag ? param.flag : this.layers[i].labelField;
+				
+				for (var j=0; j<this.layerData[this.layers[i].field].length; j++) {
+					if (this.layerData[this.layers[i].field][j][flag] === param[this.layers[i].field]) {
+						data = this.layerData[this.layers[i].field][j];
+					}
+				}
+				this._onSelectLayer(i, data);
+			}
+			return this;
+		},
+		/** Controller */
+		callMethod: function(name, param) {
+			switch (name) {
+			case 'getText':
+				return this.$element.textbox('getText');
+			case 'load':
+				return this.load(param);
+			case 'clear':
+				this._resetSelectedData();
+				this._resetTabs();
+				this.$element.textbox('clear');
+				return this;
+			}
 		}
 	}
 
 	$.fn.layerselector = function(option, param) {
-		return this.each(function() {
-			var $this = $(this);
-			var layerselector = $this.data('layerselector');
-			// TODO Add some universal method to layerselector, like load method
-			if (typeof option == 'string') {
-				layerselector.$element.textbox(option, param);
-			} else if (typeof option == 'object') {
-				$this.data('layerselector', (layerselector = new LayerSelector(option, $this)) );
-			}
-		});
+		if (typeof option === 'string') {
+			var layerselector = $(this).data('layerselector');
+			return layerselector.callMethod(option, param);
+		} else {
+			return this.each(function() {
+				$(this).data('layerselector', (layerselector = new LayerSelector(option, $(this))) );
+			});
+		}
 	}
 
 	$.fn.layerselector.defaults = {
