@@ -30,6 +30,7 @@ var param = {
     column: 5,
     panelWidth: 350,
     panelHeight: 200,
+    multiple: true,
     layers: [{
         field: 'sheng',
         prompt: '选择省份',
