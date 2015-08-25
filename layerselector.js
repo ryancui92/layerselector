@@ -1,6 +1,6 @@
 /** 
  * Layer selector version 1.0
- * @author RyanCui
+ * @author ryancui
  */
 
 (function($) {
@@ -45,11 +45,11 @@
             });
             that.$element.textbox('textbox').on('click', $.proxy(this._show, this));
 
-            $('body').append('<div id="layerSelector" class="panel-body" style="width:' + (that.config.panelWidth+10) + 
+            that.$dialog = $('<div class="panel-body" style="width:' + (that.config.panelWidth+10) +
                 'px;height:' + (that.config.panelHeight+10) + 'px;position:relative;z-index:1000111;">' + 
-                '<div id="tabs"></div></div>');
+                '<div class="layer-tabs"></div></div>');
+            that.$dialog.appendTo('body');
 
-            that.$dialog = $("#layerSelector");
             that.$dialog.on('mouseover', 'ul.tabs>li',  function() {
                 that.$tabs.tabs('select', $(this).index());
             });
@@ -65,7 +65,7 @@
                 that._hide();
             });
 
-            that.$tabs = $("#tabs");
+            that.$tabs = that.$dialog.find('div.layer-tabs');
             that.$tabs.tabs({
                 border: false,
                 width: that.config.panelWidth + 10,
@@ -109,7 +109,7 @@
             $('html').on('mousedown', function(event) {
                 // TODO When click the textbox or textbox-icon, the panel will flash,
                 //      we should handle the event later
-                if ($(event.target).closest('#layerSelector').length==0) {
+                if ($(event.target).closest(that.$dialog).length==0) {
                     that._hide();
                 }
             });
@@ -387,7 +387,7 @@
                 $(this).data('layerselector', (layerselector = new LayerSelector(option, $(this))) );
             });
         }
-    }
+    };
 
     $.fn.layerselector.defaults = {
         panelWidth: 300,            // The width of the panel

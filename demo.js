@@ -1,36 +1,90 @@
-var colorParam = {
-    required: true,
-    column: 3,
-    panelWidth: 300,
-    panelHeight: 320,
-//  multiple: true,
-    okText: '确定',
+var siteInfo = [];
+var provinceList = [];
+var cityList = [];
+var areaList = [];
+
+var seletedProvince = null;
+var seletedCity = null;
+var seletedArea = null;
+
+$.ajax({
+    url: 'chinese-site.json',
+    method: 'GET',
+    async: false,
+}).success(function(data) {
+    siteInfo = data;
+});
+
+if (siteInfo.length === 0) {
+    console.log('Read JSON fail!');
+    debugger;
+}
+
+$.each(siteInfo, function(i, v) {
+    var object = {};
+    object.name = v.name;
+    provinceList.push(object);
+});
+
+var param = {
+    column: 5,
+    panelWidth: 350,
+    panelHeight: 200,
     layers: [{
         field: 'sheng',
         prompt: '选择省份',
-        idField: 'id',
+        idField: 'name',
         labelField: 'name',
         dataProvider: function(selected) {
-            return district_sheng;
+            return provinceList;
         },
-    },{
+    }, {
         field: 'shi',
         prompt: '选择城市',
-        idField: 'id',
+        idField: 'name',
         labelField: 'name',
         dataProvider: function(selected) {
-            var ret = [];
-            for (var i=0; i<district_shi.length; i++) {
-                if (district_shi[i].parentId === selected.id) {
-                    ret.push(district_shi[i]);
+            seletedProvince = selected.name;
+            cityList = [];
+            $.each(siteInfo, function(i, v) {
+                if (v.name === selected.name) {
+                    $.each(v.city, function(i, v) {
+                        var object = {};
+                        object.name = v.name;
+                        cityList.push(object);
+                    });
+
+                    return true;
                 }
-            }
-            return ret;
-        },
-        otherItem: function(selected) {return true},
-        otherText: '其他',
-        otherOkText: '确定'
-    }],
+            });
+            return cityList;
+        }
+    }, {
+        field: 'qu',
+        prompt: '选择区',
+        idField: 'name',
+        labelField: 'name',
+        dataProvider: function(selected) {
+            seletedCity = selected.name;
+            areaList = [];
+            $.each(siteInfo, function(i, v) {
+                if (v.name === seletedProvince) {
+                    $.each(v.city, function(i, v) {
+                        if (v.name === selected.name) {
+                            $.each(v.area, function(i, v) {
+                                var object = {};
+                                object.name = v;
+                                areaList.push(object);
+                            });
+                            return true;
+                        }
+                    });
+                    return true;
+                }
+            });
+            return areaList;
+        }
+    }]
 };
 
-$('#district').layerselector(colorParam);
+$('#district').layerselector(param);
