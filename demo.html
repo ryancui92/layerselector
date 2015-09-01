@@ -17,13 +17,21 @@
 </head>
 
 <body>
-    <div class="easyui-dialog" data-options="modal:false,width:300,height:300,title:'示例对话框'">
+    <div class="easyui-dialog" data-options="modal:false,width:400,height:300,title:'EasyUI LayerSelector Demo'">
         <form id="form">
-            <input name="district" id="district">
+            <div>
+                <label for="district-multiple">Chinese District Select:</label>
+                <input id="district-multiple">
+            </div>
+            <div>
+                <label for="district-other">Chinese District Select:</label>
+                <input id="district-other">
+            </div>
+
         </form>
     </div>
 
-    <script src="layerselector-complie.js"></script>
+    <script src="jquery.layerselector.js"></script>
     <script src="demo.js"></script>
 </body>
 

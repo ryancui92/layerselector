@@ -15,11 +15,6 @@ $.ajax({
     siteInfo = data;
 });
 
-if (siteInfo.length === 0) {
-    console.log('Read JSON fail!');
-    debugger;
-}
-
 $.each(siteInfo, function(i, v) {
     var object = {};
     object.name = v.name;
@@ -88,4 +83,22 @@ var param = {
     }]
 };
 
-$('#district').layerselector(param);
+$('#district-multiple').layerselector(param);
+
+$('#district-other').layerselector({
+    layers: [{
+        field: 'language',
+        dataProvider: function() {
+            return [{
+                id: 'C++',
+                label: 'C++'
+            }, {
+                id: 'Java',
+                label: 'Java'
+            }, {
+                id: 'Cobol',
+                label: 'Cobol'
+            }];
+        }
+    }]
+});

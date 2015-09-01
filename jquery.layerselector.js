@@ -38,7 +38,7 @@
     }
 
     LayerSelector.prototype = {
-        constrcutor: LayerSelector,
+        constructor: LayerSelector,
         _initMain: function() {
             var that = this;
 
@@ -163,7 +163,13 @@
 
             // 当点击窗口以外的区域时，隐藏窗口
             $('html').on('mousedown', function(event) {
-                // TODO 当点击textbox时，会发生闪烁，由于触发mousedown事件先，再触发textbox的click事件
+
+                // Click the textbox area, no reaction
+                if ($(event.target).closest(that.$element.next()).length === 1) {
+                    return;
+                }
+
+                // Click the area out of the dialog, hide the dialog
                 if ($(event.target).closest(that.$dialog).length === 0) {
                     that._hide();
                 }
@@ -174,7 +180,7 @@
         /** 显示选择器 */
         _show: function() {
             var that = this, pos = that.$element.textbox('textbox').offset();
-            // TODO 兼容浏览器和相关的css样式
+            // TODO 获取当前浏览器的字体大小然后动态算出来？
             that.$dialog.css({
                 'top': pos.top - 7 + that.$element.textbox('options').height,
                 'left': pos.left - 9
@@ -206,7 +212,7 @@
 
                 // 如果当前item的label显示长度比一列的长度要宽则扩展一列，
                 // 直到能容纳label的长度或到了能显示的列数
-                while (data[i][that.layers[layer].labelField].length * that.options.chracterPixels
+                while (data[i][that.layers[layer].labelField].length * that.options.characterPixels
                     > that.columnWidth * colspan) {
                     colspan++;
                     linePos++;
@@ -258,7 +264,7 @@
             // 如果是多选模式，则增加一个确定按钮
             if (that.options.multiple && layer==that.layerCount-1) {
                 var okButton = '<div style="width:'+(that.options.panelWidth)+'px;text-align:center;vertical-align:middle;">' +
-                    '<a href="javascript:void(0)" class="easyui-linkbutton ok-button" data-options="iconCls:\'icon-ok\'" ' +
+                    '<a href="javascript:void(0)" class="easyui-linkbutton ok-button"' +
                     'style="width:60px;">'+ that.options.okText +'</a></div></div>';
                 ret = '<div class="easyui-layout" data-options="fit:true"><div data-options="region:\'center\',border:false">'+items+'</div>' +
                     '<div data-options="region:\'south\',border:false" style="height:30px;">'+okButton+'</div></div>';
@@ -327,7 +333,7 @@
                 });
                 newTitle = newTitleArr.join(',');
                 // 避免太长的 title
-                if (newTitle.length * that.options.chracterPixels > that.options.panelWidth / 2) {
+                if (newTitle.length * that.options.characterPixels > that.options.panelWidth / 2) {
                     newTitle = newTitleArr[0] + ',..,' + newTitleArr[newTitleArr.length-1];
                 }
             } else {
@@ -408,8 +414,8 @@
         column: 4,                  // 选择器列数
         layers: [],                 // 选择层
         multiple: false,            // 最后一层是否多选
-        chracterPixels: 15,         // 每一个中文字的像素宽度
-        okText: '确  定',           // 确定按钮显示的文字
+        characterPixels: 15,        // 每一个中文字的像素宽度 TODO 动态计算
+        okText: 'OK',               // 确定按钮显示的文字
         onSelectData: function(data) {      // 最后一层选择的回调函数
             var $this = this, o = data[$this.layers[$this.layers.length-1].field];
             if ($this.multiple) {
@@ -428,12 +434,12 @@
         dataProvider: function(selected){}, // 提供数据源
         idField: 'id',                      // ID 域名称
         labelField: 'label',                // Label 域名称
-        prompt: 'Select',                   // tab 标签的提示信息
+        prompt: 'Select..',                 // tab 标签的提示信息
         otherItem: function() {             // 是否显示其他选项，可根据上一层的选择结果进行判断
             return false;
         },
-        otherText: '其他',                    // 其他选项的显示文字
-        otherOkText: '确定'                   // 其他选项按钮显示文字
+        otherText: 'Other',                 // 其他选项的显示文字
+        otherOkText: 'OK'                   // 其他选项按钮显示文字
     };
 
 })(jQuery);

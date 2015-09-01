@@ -1,30 +1,28 @@
-.link {
-	color: black;
-	cursor: pointer;
+
+.layer-tabs {
+    font-family: SimSun, STSong;
 }
-.focus {
-	text-decoration: underline;
-	background-color: blue;
-    color: white;
-}
-.kkkk {
-	border: 1px solid red;
-}
+
+/* The line in dialog */
 .line {
-	margin: 0 auto;
+	margin: 3px auto;               /* Each line has a blank from the previous line */
 }
+
+/* The div include the link text */
 .line>div {
 	display: inline-block;
 	*display: inline;
 	*zoom: 1;
 	height:100%;
 	text-align: left;
-	margin-top: 5px;
 }
+
 .line>div>label {
+    color: black;
+    cursor: pointer;
 	display: inline-block;
 	*display: inline;
 	text-align: left;
-	vertical-align: center;
-	padding: 3px;
+	vertical-align: middle;
+	padding: 3px;                   /* Ensure the hover shadow would be a bit larger than the label itself */
 }
