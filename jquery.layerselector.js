@@ -26,16 +26,13 @@
         // 每一层选择的数据，kv字典，key为layer的field
         that.selected = {};
 
-        init.call(that);
-    };
-
-    function init() {
-        var that = this;
         that._initMain();
+
         that.layerData[that.layers[0].field] = that.layers[0].dataProvider();
         that._addTab(0);
+
         that._hide();
-    }
+    };
 
     LayerSelector.prototype = {
         constructor: LayerSelector,
@@ -104,7 +101,6 @@
                 });
 
                 that._onSelectLayer(layer, data);
-
             });
 
             // 多选时，确定按钮隐藏选择器
@@ -146,14 +142,16 @@
 
                     // 如果这一层有其他选项，则easyui渲染其他输入框
                     if (that.layers[layer].otherItem(!layer ? null : that.selected[that.layers[layer-1].field])) {
-                        // TODO 不使用选择器，直接从jquery object中读取
-                        that.$otherText = $("[name='othertext"+layer+"']");
-                        that.$otherText.textbox({
+                        var $otherInput = that.$tabs.tabs('getTab', layer).find('.other-input');
+                        $otherInput.textbox({
                             buttonText: that.layers[layer].otherOkText,
                             onClickButton: function() {
-                                var val = that.$otherText.textbox('getText'), data = {};
-                                data[that.layers[layer].labelField] = val;
+                                var val = $(this).textbox('getValue'), data = {};
+
+                                // When labelField==idField, it will generate a bug. So put labelField at last
                                 data[that.layers[layer].idField] = null;
+                                data[that.layers[layer].labelField] = val;
+
                                 that._onSelectLayer(layer, data);
                             }
                         });
@@ -180,10 +178,12 @@
         /** 显示选择器 */
         _show: function() {
             var that = this, pos = that.$element.textbox('textbox').offset();
+            console.log(pos);
+            console.log(that.$element.textbox('options').height);
             // TODO 获取当前浏览器的字体大小然后动态算出来？
             that.$dialog.css({
-                'top': pos.top - 7 + that.$element.textbox('options').height,
-                'left': pos.left - 9
+                'top': pos.top - 9 + that.$element.textbox('options').height,
+                'left': pos.left - 7
             });
             that.$dialog.css({'display': 'block'});
         },
@@ -256,7 +256,7 @@
                 var str = '<div style="width:'+(that.options.panelWidth)+'px;" class="line"><span style="margin-left:10px;"></span><div style="width:' +
                     that.columnWidth +'px;"><label class="link">'+ that.layers[layer].otherText +'</label></div>' +
                     '<div style="width:'+ (that.columnWidth*(that.options.column-1)) +
-                    'px;"><input name="othertext'+ layer +'" style="width:100%;"></div>' + 
+                    'px;"><input class="other-input" style="width:100%;"></div>' +
                     '</div>';
                 items += str;
             }
@@ -304,7 +304,8 @@
 
                 // 如果之前已经选中了，将他移出 selected 数组
                 for (var i=0; i<lastSelected.length; i++) {
-                    if (lastSelected[i][that.layers[layer].idField] === data[that.layers[layer].idField]) {
+                    // Assume that the id field must exist to avoid the other item enter the block
+                    if (data[that.layers[layer].idField] && lastSelected[i][that.layers[layer].idField] === data[that.layers[layer].idField]) {
                         origin = true;
                         that.selected[that.layers[layer].field] = 
                             [].concat(lastSelected.slice(0, i), lastSelected.slice(i+1));
@@ -325,17 +326,20 @@
                 newOption = true;
             }
 
-            // 多选则根据 selected 数组构造显示 title
+            // Construct the tab title
             if (isMultipleAndLastLayer) {
                 var newTitleArr = [];
+
                 $.each(that.selected[that.layers[layer].field], function(i, v) {
                     newTitleArr.push(v[that.layers[layer].labelField]);
                 });
                 newTitle = newTitleArr.join(',');
-                // 避免太长的 title
+
+                // Avoid a too long title
                 if (newTitle.length * that.options.characterPixels > that.options.panelWidth / 2) {
                     newTitle = newTitleArr[0] + ',..,' + newTitleArr[newTitleArr.length-1];
                 }
+
             } else {
                 newTitle = data[that.layers[layer].labelField];
             }

@@ -25,7 +25,7 @@ var param = {
     column: 5,
     panelWidth: 350,
     panelHeight: 200,
-    multiple: true,
+    //multiple: true,
     layers: [{
         field: 'sheng',
         prompt: '选择省份',
@@ -79,6 +79,11 @@ var param = {
                 }
             });
             return areaList;
+        },
+        otherText: '其他',
+        otherOkText: '确定',
+        otherItem: function() {
+            return true;
         }
     }]
 };
@@ -99,6 +104,11 @@ $('#district-other').layerselector({
                 id: 'Cobol',
                 label: 'Cobol'
             }];
+        },
+        otherText: '其他',
+        otherOkText: '确定',
+        otherItem: function() {
+            return true;
         }
     }]
 });
