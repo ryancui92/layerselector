@@ -252,7 +252,6 @@
             
             // 如果有其他选项，则增加一个textbox控件
             if (that.layers[layer].otherItem(layer==0 ? null : that.selected[that.layers[layer-1].field])) {
-                // TODO 这里用 JQuery 对象来生成 DOM，而不是用 CSS 选择器来选择
                 var str = '<div style="width:'+(that.options.panelWidth)+'px;" class="line"><span style="margin-left:10px;"></span><div style="width:' +
                     that.columnWidth +'px;"><label class="link">'+ that.layers[layer].otherText +'</label></div>' +
                     '<div style="width:'+ (that.columnWidth*(that.options.column-1)) +
@@ -312,10 +311,12 @@
                         break;
                     }
                 }
+
                 // 之前没有选中则添加进 selected 数组
                 if (!origin) {
                     that.selected[that.layers[layer].field].push(data);
                 }
+
             } else {
                 that.selected[that.layers[layer].field] = data;
             }
